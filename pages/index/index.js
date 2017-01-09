@@ -134,9 +134,11 @@ Page({
     /**
      * 多数据解析示例
      */
-    var replyHtml0 = `<div style="margin-top:10px;height:50px;">
+    var replyHtml0 = `<div style="margin-top:10px;">
 		<p class="reply">
 			wxParse回复0:不错，喜欢[03][04]
+			
+			<img src="http://a.hiphotos.baidu.com/image/pic/item/9a504fc2d5628535959cf4cf94ef76c6a6ef63db.jpg" alt="">
 		</p>	
 	</div>`;
     var replyHtml1 = `<div style="margin-top:10px;height:50px;">
@@ -174,7 +176,10 @@ Page({
 
 
     for (let i = 0; i < replyArr.length; i++) {
-      WxParse.wxParse('reply' + i, 'html', replyArr[i], that);
+      WxParse.wxParse('reply' + i, 'html', replyArr[i], that, {
+        imagePadding: 5,
+        temArrayName: "replyTemArray"
+      });
       if (i === replyArr.length - 1) {
         WxParse.wxParseTemArray("replyTemArray",'reply', replyArr.length, that)
       }

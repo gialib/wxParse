@@ -20,18 +20,25 @@ import HtmlToJson from 'html2json.js';
 /**
  * 主函数入口区
  **/
-function wxParse(bindName = 'wxParseData', type='html', data='<div class="color:red;">数据不能为空</div>', target,imagePadding) {
+function wxParse(bindName='wxParseData', type='html', data='<div class="color:red;">数据不能为空</div>', target, options) {
+  var options = options || {};
+
+  var imagePadding = options["imagePadding"];
+  var temArrayName = options["temArrayName"];
+
   var that = target;
   var transData = {};//存放转化后的数据
   if (type == 'html') {
     transData = HtmlToJson.html2json(data, bindName);
-    console.log(JSON.stringify(transData, ' ', ' '));
+    //console.log(JSON.stringify(transData, ' ', ' '));
   } else if (type == 'md' || type == 'markdown') {
     var converter = new showdown.Converter();
     var html = converter.makeHtml(data);
     transData = HtmlToJson.html2json(html, bindName);
-    console.log(JSON.stringify(transData, ' ', ' '));
+    //console.log(JSON.stringify(transData, ' ', ' '));
   }
+
+  transData.temArrayName = temArrayName;
   transData.view = {};
   transData.view.imagePadding = 0;
   if(typeof(imagePadding) != 'undefined'){
@@ -63,12 +70,15 @@ function wxParseImgLoad(e) {
   var that = this;
   var tagFrom = e.target.dataset.from;
   var idx = e.target.dataset.idx;
+  var tagData = that.data[tagFrom] || {};
+  var temArrayName = tagData["temArrayName"];
+  var temArrayIndex = tagData["temArrayIndex"];
   if (typeof (tagFrom) != 'undefined' && tagFrom.length > 0) {
-    calMoreImageInfo(e, idx, that, tagFrom)
+    calMoreImageInfo(e, idx, that, tagFrom, temArrayName, temArrayIndex)
   } 
 }
 // 假循环获取计算图片视觉最佳宽高
-function calMoreImageInfo(e, idx, that, bindName) {
+function calMoreImageInfo(e, idx, that, bindName, temArrayName, temArrayIndex) {
   var temData = that.data[bindName];
   if (temData.images.length == 0) {
     return;
@@ -81,6 +91,13 @@ function calMoreImageInfo(e, idx, that, bindName) {
   temData.images = temImages;
   var bindData = {};
   bindData[bindName] = temData;
+
+  if(temArrayName && typeof(temArrayIndex) != "undefined") {
+    var temArray = that.data[temArrayName] || [];
+    temArray[temArrayIndex] = temData.nodes;
+    bindData[temArrayName] = temArray;
+  }
+
   that.setData(bindData);
 }
 
@@ -117,13 +134,16 @@ function wxParseTemArray(temArrayName,bindNameReg,total,that){
   var array = [];
   var temData = that.data;
   var obj = null;
-  for(var i = 0; i < total; i++){
-    var simArr = temData[bindNameReg+i].nodes;
-    array.push(simArr);
-  }
-
   temArrayName = temArrayName || 'wxParseTemArray';
   obj = JSON.parse('{"'+ temArrayName +'":""}');
+  for(var i = 0; i < total; i++){
+    var simName = bindNameReg + i;
+    var simData = temData[simName];
+    var simArr = simData.nodes;
+    simData["temArrayIndex"] = i;
+    array.push(simArr);
+    obj[simName] = simData;
+  }
   obj[temArrayName] = array;
   that.setData(obj);
 }
@@ -142,5 +162,3 @@ module.exports = {
   wxParseTemArray:wxParseTemArray,
   emojisInit:emojisInit
 }
-
-
